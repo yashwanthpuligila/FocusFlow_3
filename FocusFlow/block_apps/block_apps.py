@@ -14,7 +14,16 @@ FLAG_FILE = Path(__file__).with_name("block_enabled.txt")
 
 def is_blocking_enabled():
     try:
-        return FLAG_FILE.exists() and FLAG_FILE.read_text(encoding="utf-8").strip() == "1"
+        if not FLAG_FILE.exists():
+            return False
+        # Try UTF-8 first, then UTF-16 (Windows Notepad default)
+        for encoding in ["utf-8", "utf-16"]:
+            try:
+                content = FLAG_FILE.read_text(encoding=encoding).strip()
+                return content == "1"
+            except UnicodeDecodeError:
+                continue
+        return False
     except Exception:
         return False
 
