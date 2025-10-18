@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FocusFlow API Tester</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        h1 {
+            color: #667eea;
+            text-align: center;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        h2 {
+            color: #333;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 5px;
+        }
+        button:hover {
+            background: #5568d3;
+        }
+        input {
+            padding: 8px;
+            margin: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 200px;
+        }
+        .result {
+            background: #f8f9fa;
+            padding: 15px;
+            margin-top: 15px;
+            border-left: 4px solid #667eea;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .success {
+            border-left-color: #28a745;
+            background: #d4edda;
+        }
+        .error {
+            border-left-color: #dc3545;
+            background: #f8d7da;
+        }
+        .status {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        .status.online {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status.offline {
+            background: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎯 FocusFlow API Tester</h1>
+
+    <!-- Server Status -->
+    <div class="test-section">
+        <h2>Server Status</h2>
+        <button onclick="checkServerStatus()">Check Backend Status</button>
+        <div id="serverStatus"></div>
+    </div>
+
+    <!-- Register Test -->
+    <div class="test-section">
+        <h2>1. Test User Registration</h2>
+        <div>
+            <input type="text" id="regUsername" placeholder="Username" value="testuser">
+            <input type="password" id="regPassword" placeholder="Password" value="test1234">
+        </div>
+        <div>
+            <input type="email" id="regEmail" placeholder="Email" value="test@example.com">
+            <input type="text" id="regFullName" placeholder="Full Name" value="Test User">
+        </div>
+        <button onclick="testRegister()">Register New User</button>
+        <div id="registerResult"></div>
+    </div>
+
+    <!-- Login Test -->
+    <div class="test-section">
+        <h2>2. Test Login</h2>
+        <div>
+            <input type="text" id="loginUsername" placeholder="Username" value="testuser">
+            <input type="password" id="loginPassword" placeholder="Password" value="test1234">
+        </div>
+        <button onclick="testLogin()">Login</button>
+        <button onclick="testAdminLogin()">Login as Admin</button>
+        <div id="loginResult"></div>
+    </div>
+
+    <!-- Get Users Test -->
+    <div class="test-section">
+        <h2>3. Get All Users</h2>
+        <button onclick="getAllUsers()">Fetch All Users</button>
+        <div id="usersResult"></div>
+    </div>
+
+    <!-- Database Info -->
+    <div class="test-section">
+        <h2>📊 Database Information</h2>
+        <p><strong>Database:</strong> H2 In-Memory Database</p>
+        <p><strong>Console URL:</strong> <a href="http://localhost:8081/h2-console" target="_blank">http://localhost:8081/h2-console</a></p>
+        <p><strong>JDBC URL:</strong> jdbc:h2:mem:focusflow</p>
+        <p><strong>Username:</strong> sa</p>
+        <p><strong>Password:</strong> (empty)</p>
+        <button onclick="window.open('http://localhost:8081/h2-console', '_blank')">Open H2 Console</button>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8081/api/auth';
+
+        async function checkServerStatus() {
+            const resultDiv = document.getElementById('serverStatus');
+            try {
+                const response = await fetch(API_BASE + '/users');
+                if (response.ok) {
+                    resultDiv.innerHTML = '<div class="status online">✅ Backend Server is ONLINE</div>';
+                } else {
+                    resultDiv.innerHTML = '<div class="status offline">❌ Backend Server responded with error</div>';
+                }
+            } catch (error) {
+                resultDiv.innerHTML = '<div class="status offline">❌ Backend Server is OFFLINE<br>Make sure to run: mvn spring-boot:run</div>';
+            }
+        }
+
+        async function testRegister() {
+            const resultDiv = document.getElementById('registerResult');
+            const data = {
+                username: document.getElementById('regUsername').value,
+                password: document.getElementById('regPassword').value,
+                email: document.getElementById('regEmail').value,
+                fullName: document.getElementById('regFullName').value
+            };
+
+            resultDiv.innerHTML = '<div class="result">⏳ Registering user...</div>';
+
+            try {
+                const response = await fetch(API_BASE + '/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    resultDiv.innerHTML = `<div class="result success">✅ SUCCESS!\n${JSON.stringify(result, null, 2)}</div>`;
+                } else {
+                    resultDiv.innerHTML = `<div class="result error">❌ FAILED\n${JSON.stringify(result, null, 2)}</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="result error">❌ ERROR: ${error.message}</div>`;
+            }
+        }
+
+        async function testLogin() {
+            const resultDiv = document.getElementById('loginResult');
+            const data = {
+                username: document.getElementById('loginUsername').value,
+                password: document.getElementById('loginPassword').value
+            };
+
+            resultDiv.innerHTML = '<div class="result">⏳ Logging in...</div>';
+
+            try {
+                const response = await fetch(API_BASE + '/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    resultDiv.innerHTML = `<div class="result success">✅ LOGIN SUCCESS!\n${JSON.stringify(result, null, 2)}</div>`;
+                } else {
+                    resultDiv.innerHTML = `<div class="result error">❌ LOGIN FAILED\n${JSON.stringify(result, null, 2)}</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="result error">❌ ERROR: ${error.message}</div>`;
+            }
+        }
+
+        async function testAdminLogin() {
+            const resultDiv = document.getElementById('loginResult');
+            const data = {
+                username: 'admin',
+                password: 'admin'
+            };
+
+            resultDiv.innerHTML = '<div class="result">⏳ Logging in as admin...</div>';
+
+            try {
+                const response = await fetch(API_BASE + '/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    resultDiv.innerHTML = `<div class="result success">✅ ADMIN LOGIN SUCCESS!\n${JSON.stringify(result, null, 2)}</div>`;
+                } else {
+                    resultDiv.innerHTML = `<div class="result error">❌ ADMIN LOGIN FAILED\n${JSON.stringify(result, null, 2)}</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="result error">❌ ERROR: ${error.message}</div>`;
+            }
+        }
+
+        async function getAllUsers() {
+            const resultDiv = document.getElementById('usersResult');
+            resultDiv.innerHTML = '<div class="result">⏳ Fetching users...</div>';
+
+            try {
+                const response = await fetch(API_BASE + '/users');
+                const users = await response.json();
+                
+                resultDiv.innerHTML = `<div class="result success">✅ Found ${users.length} user(s)\n${JSON.stringify(users, null, 2)}</div>`;
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="result error">❌ ERROR: ${error.message}</div>`;
+            }
+        }
+
+        // Check server status on load
+        window.onload = checkServerStatus;
+    </script>
+</body>
+</html>

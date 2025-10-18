@@ -1,0 +1,12 @@
+@keyframes ride {
+  0% { left: 0%; }
+  100% { left: 100%; }
+}
+
+.cycling-animation {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  font-size: 30px;
+  animation: ride 5s linear infinite;
+}

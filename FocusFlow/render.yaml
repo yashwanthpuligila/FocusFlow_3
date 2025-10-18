@@ -1,0 +1,26 @@
+services:
+  - type: web_service
+    name: focusflow-frontend
+    env: static
+    buildCommand: "cd frontend && npm install && npm run build"
+    staticPublishPath: frontend/build
+    repo: https://github.com/lucy02-zone/FocusFlow
+    branch: main
+
+  - type: web_service
+    name: focusflow-blocker-api
+    env: node
+    plan: free
+    buildCommand: "cd block_apps && npm install"
+    startCommand: "cd block_apps && node server.js"
+    repo: https://github.com/lucy02-zone/FocusFlow
+    branch: main
+
+  - type: web_service
+    name: focusflow-admin-backend
+    env: java
+    plan: free
+    buildCommand: "cd focusflow-admin-backend && mvn -DskipTests package"
+    startCommand: "java -jar focusflow-admin-backend/target/admin-backend-0.0.1-SNAPSHOT.jar"
+    repo: https://github.com/lucy02-zone/FocusFlow
+    branch: main
